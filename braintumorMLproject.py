@@ -1,36 +1,32 @@
 import os
 import numpy as np
-# PIL, or Python Image Library, helps us with processing the image file
-from PIL import Image
-
-# torch is used for tensors and machine learning
-import torch
-# torchvision.transforms, or torchvision.trasnforms.v2, allow us to transform each image, for example
-# resize, crop, rotate, convert to tensor, blur, etc.
-from torchvision.transforms import v2 as transforms
-
-# torch Dataset and Dataloader allow us to effiecently process our dataset.
-from torch.utils.data import Dataset, DataLoader
-
-
-import os
-import numpy as np
 from PIL import Image
 
 import torch
 from torchvision.transforms import v2 as transforms
 from torch.utils.data import Dataset, DataLoader
 
-class ImageFolderDataset():
+class ImageFolderDataset(Dataset):
     def __init__(self, folder_path):
+        abs_path = os.path.abspath(folder_path)
+
+        # Check if the directory exists
+        if not os.path.exists(abs_path):
+            raise FileNotFoundError(f"Error: The folder path '{abs_path}' does not exist. Please check the path.")
+
         # Get all image file paths
-        self.image_paths = [os.path.join(folder_path, file) for file in os.listdir(os.path.abspath(folder_path))]
+        self.image_paths = [os.path.join(abs_path, file) for file in os.listdir(abs_path)
+                            if file.lower().endswith(('.png', '.jpg', '.jpeg'))]  # Ensure only images are selected
+
+        if len(self.image_paths) == 0:
+            print(f"Warning: No images found in {abs_path}")
 
         self.transform = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Resize((256, 256)),  
-            transforms.RandomHorizontalFlip(),  
+            transforms.Resize((256, 256)),
+            transforms.RandomHorizontalFlip(),
         ])
+
     def __len__(self):
         return len(self.image_paths)
 
@@ -45,24 +41,18 @@ class ImageFolderDataset():
 
         return image
     
+def load_train_images(train_folder_path):
+    dataset = ImageFolderDataset(train_folder_path)
+    
+    image_tensor = torch.tensor([dataset.getitem(i) for i in range(len(dataset))])
 
-images_training_glioma = []
+train_folder_path = './braindataset/Training'
 
-train_giloma = ImageFolderDataset('../braindataset/Testing/glioma')
-train_meningioma = ImageFolderDataset('../braindataset/Testing/meningioma')
-train_notumor = ImageFolderDataset('../WINTER2025AIPROJECT/braindataset/Testing/notumor')
-train_pituitary = ImageFolderDataset('../WINTER2025AIPROJECT/braindataset/Testing/pituitary')
-
-
-len_giloma = len(train_giloma)
-len_meningioma = len(train_meningioma)
-len_notumor = len(train_notumor)
-len_pituitary = len(train_pituitary)
-
-print(f"Number of glioma images: {len_giloma}")
-print(f"Number of meningioma images: {len_meningioma}")
-print(f"Number of no tumor images: {len_notumor}")
-print(f"Number of pituitary images: {len_pituitary}")
+giloma_train_tensot = load_train_images(train_folder_path + "/giloma")
+meningioma_train = load_train_images(train_folder_path + "/meningioma")
+notumor_train = load_train_images(train_folder_path + "/notumor")
+pituitary_train = load_train_images(train_folder_path + "/pituitary")
 
 
-print(images_training_glioma)
+
+
