@@ -13,43 +13,46 @@ from torchvision.transforms import v2 as transforms
 from torch.utils.data import Dataset, DataLoader
 
 
-class ImageFolderDataset(Dataset):
-    def __init__(self, image_paths):
-        # here, you should set any important vairables you want to use in __len__ or __getitem__
-        self.image_paths = image_paths
+import os
+import numpy as np
+from PIL import Image
+
+import torch
+from torchvision.transforms import v2 as transforms
+from torch.utils.data import Dataset, DataLoader
+
+class ImageFolderDataset():
+    def __init__(self, folder_path):
+        # Get all image file paths
+        self.image_paths = [os.path.join(folder_path, file) for file in os.listdir(os.path.abspath(folder_path))]
 
         self.transform = transforms.Compose([
-          transforms.ToTensor(),
-          # put other transforms here! https://pytorch.org/vision/stable/transforms.html#v2-api-ref
-          # some useful ones might be resizing or cropping, consider also doing random augmentations
-          # to make your model more robust.
+            transforms.ToTensor(),
+            transforms.Resize((256, 256)),  
+            transforms.RandomHorizontalFlip(),  
         ])
-
-
-    # this should just return the length of the dataset, without processing or opening any images
     def __len__(self):
         return len(self.image_paths)
 
-    def __getitem__(self, idx):
-
-        # we get the image path from the index
+    def getitem(self, idx):
         image_path = self.image_paths[idx]
-        print(image_path)
-        # use the PIL class to get the image
+
+        # Open image
         image = Image.open(image_path).convert('RGB')
 
-        # run transformations on image
+        # Apply transformations
         image = self.transform(image)
-    
+
         return image
     
 
 images_training_glioma = []
 
-train_giloma = ImageFolderDataset('WINTER2025AIPROJECT/braindataset/Testing/glioma')
-train_meningioma = ImageFolderDataset('WINTER2025AIPROJECT/braindataset/Testing/train_meningioma')
-train_notumor = ImageFolderDataset('WINTER2025AIPROJECT/braindataset/Testing/notumor')
-train_pituitary = ImageFolderDataset('WINTER2025AIPROJECT/braindataset/Testing/pituitary')
+train_giloma = ImageFolderDataset('../braindataset/Testing/glioma')
+train_meningioma = ImageFolderDataset('../braindataset/Testing/meningioma')
+train_notumor = ImageFolderDataset('../WINTER2025AIPROJECT/braindataset/Testing/notumor')
+train_pituitary = ImageFolderDataset('../WINTER2025AIPROJECT/braindataset/Testing/pituitary')
+
 
 len_giloma = len(train_giloma)
 len_meningioma = len(train_meningioma)
@@ -60,5 +63,6 @@ print(f"Number of glioma images: {len_giloma}")
 print(f"Number of meningioma images: {len_meningioma}")
 print(f"Number of no tumor images: {len_notumor}")
 print(f"Number of pituitary images: {len_pituitary}")
+
 
 print(images_training_glioma)
