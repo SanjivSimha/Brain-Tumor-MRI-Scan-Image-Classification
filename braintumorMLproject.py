@@ -12,4 +12,3 @@ for filename in os.listdir(folder_path):
         img = Image.open(file_path)
         images_training_glioma.append(img)
 
-print(images_training_glioma)
