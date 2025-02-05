@@ -40,7 +40,7 @@ class ImageFolderDataset(Dataset):
 
         return image
 
-def load_train_images(train_folder_path):
+def load_images(train_folder_path):
     dataset = ImageFolderDataset(train_folder_path)
 
     image_tensor = torch.stack([dataset[i] for i in range(len(dataset))])
@@ -49,26 +49,14 @@ def load_train_images(train_folder_path):
 
 # Updated to use relative paths
 train_folder_path = './braindataset/Training'
+test_folder_path = './braindataset/Testing'
 
-glioma_train_tensor = load_train_images(os.path.join(train_folder_path, "glioma"))
-meningioma_train_tensor = load_train_images(os.path.join(train_folder_path, "meningioma"))
-notumor_train_tensor = load_train_images(os.path.join(train_folder_path, "notumor"))
-pituitary_train_tensor = load_train_images(os.path.join(train_folder_path, "pituitary"))
+glioma_train_tensor = load_images(os.path.join(train_folder_path, "glioma"))
+meningioma_train_tensor = load_images(os.path.join(train_folder_path, "meningioma"))
+notumor_train_tensor = load_images(os.path.join(train_folder_path, "notumor"))
+pituitary_train_tensor = load_images(os.path.join(train_folder_path, "pituitary"))
 
-#displays first glioma train image
-def show_tensor_image(tensor):
-    if tensor.ndim == 4:
-        tensor = tensor[0]
-
-    image = tensor.numpy()
-
-    image = image.transpose((1, 2, 0))
-
-    image = image * 255
-    image = image.astype('uint8')
-
-    plt.imshow(image)
-    plt.axis('off')
-    plt.show()
-
-show_tensor_image(glioma_train_tensor[0])
+glioma_test_tensor = load_images(os.path.join(test_folder_path, "glioma"))
+meningioma_test_tensor = load_images(os.path.join(test_folder_path, "meningioma"))
+notumor_test_tensor = load_images(os.path.join(test_folder_path, "notumor"))
+pituitary_test_tensor = load_images(os.path.join(test_folder_path, "pituitary"))
