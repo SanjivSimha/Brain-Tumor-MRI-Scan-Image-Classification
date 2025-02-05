@@ -3,20 +3,21 @@ import numpy as np
 from PIL import Image
 
 import torch
-from torchvision.transforms import v2 as transforms
-from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms
+from torch.utils.data import Dataset
+
+import matplotlib.pyplot as plt
+import torchvision.transforms as transforms
 
 class ImageFolderDataset(Dataset):
     def __init__(self, folder_path):
         abs_path = os.path.abspath(folder_path)
 
-        # Check if the directory exists
         if not os.path.exists(abs_path):
             raise FileNotFoundError(f"Error: The folder path '{abs_path}' does not exist. Please check the path.")
 
-        # Get all image file paths
         self.image_paths = [os.path.join(abs_path, file) for file in os.listdir(abs_path)
-                            if file.lower().endswith(('.png', '.jpg', '.jpeg'))]  # Ensure only images are selected
+                            if file.lower().endswith(('.png', '.jpg', '.jpeg'))]  
 
         if len(self.image_paths) == 0:
             print(f"Warning: No images found in {abs_path}")
@@ -30,29 +31,44 @@ class ImageFolderDataset(Dataset):
     def __len__(self):
         return len(self.image_paths)
 
-    def getitem(self, idx):
+    def __getitem__(self, idx):
         image_path = self.image_paths[idx]
 
-        # Open image
         image = Image.open(image_path).convert('RGB')
 
-        # Apply transformations
         image = self.transform(image)
 
         return image
-    
+
 def load_train_images(train_folder_path):
     dataset = ImageFolderDataset(train_folder_path)
-    
-    image_tensor = torch.tensor([dataset.getitem(i) for i in range(len(dataset))])
 
+    image_tensor = torch.stack([dataset[i] for i in range(len(dataset))])
+
+    return image_tensor
+
+# Updated to use relative paths
 train_folder_path = './braindataset/Training'
 
-giloma_train_tensot = load_train_images(train_folder_path + "/giloma")
-meningioma_train = load_train_images(train_folder_path + "/meningioma")
-notumor_train = load_train_images(train_folder_path + "/notumor")
-pituitary_train = load_train_images(train_folder_path + "/pituitary")
+glioma_train_tensor = load_train_images(os.path.join(train_folder_path, "glioma"))
+meningioma_train_tensor = load_train_images(os.path.join(train_folder_path, "meningioma"))
+notumor_train_tensor = load_train_images(os.path.join(train_folder_path, "notumor"))
+pituitary_train_tensor = load_train_images(os.path.join(train_folder_path, "pituitary"))
 
+#displays first glioma train image
+def show_tensor_image(tensor):
+    if tensor.ndim == 4:
+        tensor = tensor[0]
 
+    image = tensor.numpy()
 
+    image = image.transpose((1, 2, 0))
 
+    image = image * 255
+    image = image.astype('uint8')
+
+    plt.imshow(image)
+    plt.axis('off')
+    plt.show()
+
+show_tensor_image(glioma_train_tensor[0])
