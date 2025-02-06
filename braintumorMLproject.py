@@ -66,20 +66,20 @@ pituitary_test_tensor = load_images(os.path.join(test_folder_path, "pituitary"))
 
 class Model(nn.Module):
     def __init__(self):
-        super.__init__(self)
+        super(Model, self).__init__()
         self.model = nn.Sequential(
-            nn.Conv2d(1, 32, (3, 3)),
+            nn.Conv2d(1, 32, kernel_size=(3, 3), padding=1),
             nn.ReLU(),
-            nn.Conv2d(32, 64, (3, 3)),
+            nn.Conv2d(32, 64, kernel_size=(3, 3), padding=1),
             nn.ReLU(),
-            nn.Conv2d(64, 128, (3, 3)),
+            nn.Conv2d(64, 128, kernel_size=(3, 3), padding=1),
             nn.ReLU(),
-            nn.Conv2d(128, 128, (3, 3)),
+            nn.Conv2d(128, 128, kernel_size=(3, 3), padding=1),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(256*256, 4)
+            nn.Linear(128 * 28 * 28, 4)
         )
-    
+
     def forward(self, x):
         pass
 
