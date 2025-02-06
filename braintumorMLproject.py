@@ -5,6 +5,9 @@ from PIL import Image
 import torch
 from torchvision import transforms
 from torch.utils.data import Dataset
+import torch.nn as nn
+from torch.optim import Adam
+
 
 import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
@@ -60,3 +63,27 @@ glioma_test_tensor = load_images(os.path.join(test_folder_path, "glioma"))
 meningioma_test_tensor = load_images(os.path.join(test_folder_path, "meningioma"))
 notumor_test_tensor = load_images(os.path.join(test_folder_path, "notumor"))
 pituitary_test_tensor = load_images(os.path.join(test_folder_path, "pituitary"))
+
+class Model(nn.Module):
+    def __init__(self):
+        super.__init__(self)
+        self.model = nn.Sequential(
+            nn.Conv2d(1, 32, (3, 3)),
+            nn.ReLU(),
+            nn.Conv2d(32, 64, (3, 3)),
+            nn.ReLU(),
+            nn.Conv2d(64, 128, (3, 3)),
+            nn.ReLU(),
+            nn.Conv2d(128, 128, (3, 3)),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(256*256, 4)
+        )
+    
+    def forward(self, x):
+        pass
+
+#instance for nerual network, optimizer, and loss function
+classifier = Model().to('cpu')
+optimizer = Adam(classifier.parameters(), lr = 1e-3)
+loss_function = nn.CrossEntropyLoss()
