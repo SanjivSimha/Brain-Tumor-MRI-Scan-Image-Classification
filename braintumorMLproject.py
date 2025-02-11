@@ -7,7 +7,7 @@ from torchvision import transforms
 from torch.utils.data import Dataset
 import torch.nn as nn
 from torch.optim import Adam
-
+from torch.utils.data import DataLoader, TensorDataset
 
 import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
@@ -64,11 +64,33 @@ meningioma_test_tensor = load_images(os.path.join(test_folder_path, "meningioma"
 notumor_test_tensor = load_images(os.path.join(test_folder_path, "notumor"))
 pituitary_test_tensor = load_images(os.path.join(test_folder_path, "pituitary"))
 
+train_images = torch.cat([glioma_train_tensor, meningioma_train_tensor, notumor_train_tensor, pituitary_train_tensor], dim=0)
+train_labels = torch.cat([
+    torch.full((glioma_train_tensor.size(0),), 0),  # Label 0 for glioma
+    torch.full((meningioma_train_tensor.size(0),), 1),  # Label 1 for meningioma
+    torch.full((notumor_train_tensor.size(0),), 2),  # Label 2 for notumor
+    torch.full((pituitary_train_tensor.size(0),), 3)  # Label 3 for pituitary
+], dim=0)
+
+test_images = torch.cat([glioma_test_tensor, meningioma_test_tensor, notumor_test_tensor, pituitary_test_tensor], dim=0)
+test_labels = torch.cat([
+    torch.full((glioma_test_tensor.size(0),), 0),  # Label 0 for glioma
+    torch.full((meningioma_test_tensor.size(0),), 1),  # Label 1 for meningioma
+    torch.full((notumor_test_tensor.size(0),), 2),  # Label 2 for notumor
+    torch.full((pituitary_test_tensor.size(0),), 3)  # Label 3 for pituitary
+], dim=0)
+
+train_dataset = TensorDataset(train_images, train_labels)
+test_dataset = TensorDataset(test_images, test_labels)
+
+train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+
 class Model(nn.Module):
     def __init__(self):
         super(Model, self).__init__()
         self.model = nn.Sequential(
-            nn.Conv2d(1, 32, kernel_size=(3, 3), padding=1),
+            nn.Conv2d(3, 32, kernel_size=(3, 3), padding=1),
             nn.ReLU(),
             nn.Conv2d(32, 64, kernel_size=(3, 3), padding=1),
             nn.ReLU(),
@@ -77,13 +99,44 @@ class Model(nn.Module):
             nn.Conv2d(128, 128, kernel_size=(3, 3), padding=1),
             nn.ReLU(),
             nn.Flatten(),
-            nn.Linear(128 * 28 * 28, 4)
+            nn.Linear(128 * 256 * 256, 4)
         )
 
     def forward(self, x):
-        pass
+        return self.model(x)
 
 #instance for nerual network, optimizer, and loss function
 classifier = Model().to('cpu')
 optimizer = Adam(classifier.parameters(), lr = 1e-3)
 loss_function = nn.CrossEntropyLoss()
+
+epochs = 10
+
+for epoch in range(epochs):
+    classifier.train()  # Set model to training mode
+    running_loss = 0.0
+    correct = 0
+    total = 0
+
+    for images, labels in train_loader:
+        images, labels = images.to('cpu'), labels.to('cpu')
+
+        # Zero the gradients
+        optimizer.zero_grad()
+
+        # Forward pass
+        outputs = classifier(images)
+        loss = loss_function(outputs, labels)
+
+        # Backward pass and optimize
+        loss.backward()
+        optimizer.step()
+
+        # Track loss and accuracy
+        running_loss += loss.item()
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+
+    # Print epoch statistics
+    print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(train_loader):.4f}, Accuracy: {100 * correct / total:.2f}%")
