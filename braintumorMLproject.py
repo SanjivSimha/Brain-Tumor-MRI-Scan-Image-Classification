@@ -105,7 +105,7 @@ class Model(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-#instance for nerual network, optimizer, and loss function
+#creating the nerual network, optimizer, and loss function
 classifier = Model().to('cpu')
 optimizer = Adam(classifier.parameters(), lr = 1e-3)
 loss_function = nn.CrossEntropyLoss()
@@ -113,7 +113,7 @@ loss_function = nn.CrossEntropyLoss()
 epochs = 10
 
 for epoch in range(epochs):
-    classifier.train()  # Set model to training mode
+    classifier.train()
     running_loss = 0.0
     correct = 0
     total = 0
@@ -121,22 +121,18 @@ for epoch in range(epochs):
     for images, labels in train_loader:
         images, labels = images.to('cpu'), labels.to('cpu')
 
-        # Zero the gradients
         optimizer.zero_grad()
 
-        # Forward pass
         outputs = classifier(images)
         loss = loss_function(outputs, labels)
 
-        # Backward pass and optimize
         loss.backward()
         optimizer.step()
 
-        # Track loss and accuracy
         running_loss += loss.item()
         _, predicted = torch.max(outputs.data, 1)
         total += labels.size(0)
         correct += (predicted == labels).sum().item()
 
-    # Print epoch statistics
+    # display epochs
     print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(train_loader):.4f}, Accuracy: {100 * correct / total:.2f}%")
