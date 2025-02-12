@@ -1,15 +1,12 @@
 import os
 import numpy as np
 from PIL import Image
-
 import torch
 from torchvision import transforms
 from torch.utils.data import Dataset
 import torch.nn as nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader, TensorDataset
-
-import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 
 class ImageFolderDataset(Dataset):
