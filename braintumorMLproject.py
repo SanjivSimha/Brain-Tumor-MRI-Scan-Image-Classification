@@ -8,6 +8,7 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader, TensorDataset
 import torchvision.transforms as transforms
+from sklearn.metrics import accuracy_score
 
 class ImageFolderDataset(Dataset):
     def __init__(self, folder_path):
@@ -89,47 +90,75 @@ class Model(nn.Module):
         self.model = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=(3, 3), padding=1),
             nn.ReLU(),
+            nn.MaxPool2d(kernel_size=(2, 2), stride=2),
             nn.Conv2d(32, 64, kernel_size=(3, 3), padding=1),
             nn.ReLU(),
+            nn.MaxPool2d(kernel_size=(2, 2), stride=2), 
             nn.Conv2d(64, 128, kernel_size=(3, 3), padding=1),
             nn.ReLU(),
+            nn.MaxPool2d(kernel_size=(2, 2), stride=2), 
             nn.Conv2d(128, 128, kernel_size=(3, 3), padding=1),
             nn.ReLU(),
+            nn.MaxPool2d(kernel_size=(2, 2), stride=2), 
             nn.Flatten(),
-            nn.Linear(128 * 256 * 256, 4)
+            nn.Linear(128 * 16 * 16, 4)
         )
 
     def forward(self, x):
         return self.model(x)
 
-#creating the nerual network, optimizer, and loss function
+# creating the nerual network, optimizer, and loss function
 classifier = Model().to('cpu')
 optimizer = Adam(classifier.parameters(), lr = 1e-3)
 loss_function = nn.CrossEntropyLoss()
 
-epochs = 10
+# training loop
+# epochs = 10
 
-for epoch in range(epochs):
-    classifier.train()
-    running_loss = 0.0
-    correct = 0
-    total = 0
+# for epoch in range(epochs):
+#     classifier.train()
+#     running_loss = 0.0
+#     correct = 0
+#     total = 0
 
-    for images, labels in train_loader:
-        images, labels = images.to('cpu'), labels.to('cpu')
+#     for images, labels in train_loader:
+#         images, labels = images.to('cpu'), labels.to('cpu')
 
-        optimizer.zero_grad()
+#         optimizer.zero_grad()
 
-        outputs = classifier(images)
-        loss = loss_function(outputs, labels)
+#         outputs = classifier(images)
+#         loss = loss_function(outputs, labels)
 
-        loss.backward()
-        optimizer.step()
+#         loss.backward()
+#         optimizer.step()
 
-        running_loss += loss.item()
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
+#         running_loss += loss.item()
+#         _, predicted = torch.max(outputs.data, 1)
+#         total += labels.size(0)
+#         correct += (predicted == labels).sum().item()
 
-    # display epochs
-    print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(train_loader):.4f}, Accuracy: {100 * correct / total:.2f}%")
+#     # display epochs
+#     print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(train_loader):.2f}, Accuracy: {100 * correct / total:.2f}%")
+
+# # save model in .pth after training
+# torch.save(classifier.state_dict(), 'model_after_10_epochs.pth')
+# print("model saved")
+
+# load up saved model to use in testing loop
+model = Model().to('cpu')
+model.load_state_dict(torch.load('model_after_10_epochs.pth'))
+model.eval()
+
+# testing loop
+with torch.no_grad():
+    total_predictions = []
+    total_labels = []
+
+    for inputs, labels in test_loader:
+        outputs = model(inputs)
+        _, predictions = torch.max(outputs, 1) 
+        total_predictions.extend(predictions.cpu().numpy())  
+        total_labels.extend(labels.cpu().numpy())
+    #output accuracy %, number of correct predictions divided by total predictions
+    accuracy = accuracy_score(total_labels, total_predictions)
+    print(f'Test Accuracy: {accuracy * 100:.3f}%')
