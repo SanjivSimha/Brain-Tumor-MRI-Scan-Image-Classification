@@ -8,7 +8,9 @@ import torch.nn as nn
 from torch.optim import Adam
 from torch.utils.data import DataLoader, TensorDataset
 import torchvision.transforms as transforms
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 class ImageFolderDataset(Dataset):
     def __init__(self, folder_path):
@@ -150,6 +152,7 @@ model.load_state_dict(torch.load('model_after_10_epochs.pth'))
 model.eval()
 
 # testing loop
+
 with torch.no_grad():
     total_predictions = []
     total_labels = []
@@ -159,6 +162,93 @@ with torch.no_grad():
         _, predictions = torch.max(outputs, 1) 
         total_predictions.extend(predictions.cpu().numpy())  
         total_labels.extend(labels.cpu().numpy())
-    #output accuracy %, number of correct predictions divided by total predictions
+    
     accuracy = accuracy_score(total_labels, total_predictions)
     print(f'Test Accuracy: {accuracy * 100:.3f}%')
+
+def plot_confusion_matrix(y_true, y_pred, class_names):
+    plt.figure(figsize=(10, 8))
+    cm = confusion_matrix(y_true, y_pred)
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+                xticklabels=class_names,
+                yticklabels=class_names)
+    plt.title('Confusion Matrix')
+    plt.ylabel('True Label')
+    plt.xlabel('Predicted Label')
+    plt.tight_layout()
+    plt.savefig('confusion_matrix.png')
+    plt.close()
+
+def plot_class_accuracies(y_true, y_pred, class_names):
+    # Convert to numpy arrays if they aren't already
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    
+    class_accuracies = []
+    for i in range(len(class_names)):
+        # Find all indices where true label is class i
+        class_indices = np.where(y_true == i)[0]
+        if len(class_indices) > 0:  # Only calculate if we have samples
+            class_acc = accuracy_score(y_true[class_indices], y_pred[class_indices])
+            class_accuracies.append(class_acc * 100)
+        else:
+            class_accuracies.append(0)
+
+    plt.figure(figsize=(10, 6))
+    bars = plt.bar(class_names, class_accuracies)
+    plt.title('Class-wise Accuracy')
+    plt.ylabel('Accuracy (%)')
+    plt.xlabel('Class')
+    
+    # Add value labels on top of each bar
+    for bar in bars:
+        height = bar.get_height()
+        plt.text(bar.get_x() + bar.get_width()/2., height,
+                f'{height:.1f}%',
+                ha='center', va='bottom')
+    
+    plt.ylim(0, 100)
+    plt.tight_layout()
+    plt.savefig('class_accuracies.png')
+    plt.close()
+
+def plot_prediction_distribution(y_true, y_pred, class_names):
+    plt.figure(figsize=(12, 5))
+    
+    # Convert to numpy arrays if they aren't already
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    
+    # Plot true distribution
+    plt.subplot(1, 2, 1)
+    true_dist = [np.sum(y_true == i) for i in range(len(class_names))]
+    plt.bar(class_names, true_dist)
+    plt.title('True Class Distribution')
+    plt.ylabel('Number of Samples')
+    plt.xticks(rotation=45)
+    
+    # Plot predicted distribution
+    plt.subplot(1, 2, 2)
+    pred_dist = [np.sum(y_pred == i) for i in range(len(class_names))]
+    plt.bar(class_names, pred_dist)
+    plt.title('Predicted Class Distribution')
+    plt.xticks(rotation=45)
+    
+    plt.tight_layout()
+    plt.savefig('class_distribution.png')
+    plt.close()
+
+class_names = ['Glioma', 'Meningioma', 'No Tumor', 'Pituitary']
+
+# Convert predictions and labels to numpy arrays
+total_predictions = np.array(total_predictions)
+total_labels = np.array(total_labels)
+
+# Create visualizations
+plot_confusion_matrix(total_labels, total_predictions, class_names)
+plot_class_accuracies(total_labels, total_predictions, class_names)
+plot_prediction_distribution(total_labels, total_predictions, class_names)
+
+# Print detailed classification report
+print("\nDetailed Classification Report:")
+print(classification_report(total_labels, total_predictions, target_names=class_names))
