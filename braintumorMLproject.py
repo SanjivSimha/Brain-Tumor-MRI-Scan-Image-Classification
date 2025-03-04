@@ -180,15 +180,13 @@ def plot_confusion_matrix(y_true, y_pred, class_names):
     plt.close()
 
 def plot_class_accuracies(y_true, y_pred, class_names):
-    # Convert to numpy arrays if they aren't already
     y_true = np.array(y_true)
     y_pred = np.array(y_pred)
     
     class_accuracies = []
     for i in range(len(class_names)):
-        # Find all indices where true label is class i
         class_indices = np.where(y_true == i)[0]
-        if len(class_indices) > 0:  # Only calculate if we have samples
+        if len(class_indices) > 0:  
             class_acc = accuracy_score(y_true[class_indices], y_pred[class_indices])
             class_accuracies.append(class_acc * 100)
         else:
@@ -200,7 +198,6 @@ def plot_class_accuracies(y_true, y_pred, class_names):
     plt.ylabel('Accuracy (%)')
     plt.xlabel('Class')
     
-    # Add value labels on top of each bar
     for bar in bars:
         height = bar.get_height()
         plt.text(bar.get_x() + bar.get_width()/2., height,
@@ -215,11 +212,9 @@ def plot_class_accuracies(y_true, y_pred, class_names):
 def plot_prediction_distribution(y_true, y_pred, class_names):
     plt.figure(figsize=(12, 5))
     
-    # Convert to numpy arrays if they aren't already
     y_true = np.array(y_true)
     y_pred = np.array(y_pred)
     
-    # Plot true distribution
     plt.subplot(1, 2, 1)
     true_dist = [np.sum(y_true == i) for i in range(len(class_names))]
     plt.bar(class_names, true_dist)
@@ -227,7 +222,6 @@ def plot_prediction_distribution(y_true, y_pred, class_names):
     plt.ylabel('Number of Samples')
     plt.xticks(rotation=45)
     
-    # Plot predicted distribution
     plt.subplot(1, 2, 2)
     pred_dist = [np.sum(y_pred == i) for i in range(len(class_names))]
     plt.bar(class_names, pred_dist)
@@ -240,15 +234,12 @@ def plot_prediction_distribution(y_true, y_pred, class_names):
 
 class_names = ['Glioma', 'Meningioma', 'No Tumor', 'Pituitary']
 
-# Convert predictions and labels to numpy arrays
 total_predictions = np.array(total_predictions)
 total_labels = np.array(total_labels)
 
-# Create visualizations
 plot_confusion_matrix(total_labels, total_predictions, class_names)
 plot_class_accuracies(total_labels, total_predictions, class_names)
 plot_prediction_distribution(total_labels, total_predictions, class_names)
 
-# Print detailed classification report
 print("\nDetailed Classification Report:")
 print(classification_report(total_labels, total_predictions, target_names=class_names))
